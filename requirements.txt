@@ -5,4 +5,7 @@ torchaudio==0.10.1
 torchvision==0.11.2
 deep_tabular_augmentation
 tqdm
+ipywidgets
 seaborn
+scikit-learn==1.2.2
+PyYAML
