@@ -1,5 +1,9 @@
 from pandas.core.frame import DataFrame
-from typing import Dict
+from typing import Dict, Union
+
+import pandas as pd
+import numpy as np 
+import torch
 
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
@@ -24,32 +28,27 @@ class Data:
         self.batch_size = cfg["batch_size"]        
 
         if self.classification: 
-            self.reference = cfg["reference"]
-        
-        self.column_types = {}
+            self.target_class = cfg["target_class"]
+        else: 
+            raise NotImplementedError("Regression is not yet implemented.")
 
-        for col in cfg["numeric"]:
-            self.column_types[col] = "numeric"
-        for col in cfg["category"]:
-            self.column_types[col] = "category" 
-
-        self._feature_types = {
-            feature: type for feature, type in self.column_types.items() if feature!=cfg["target"]
+        self.feature_types = {
+            "numeric": [col for col in cfg["numeric"] if col != self.target],
+            "category": [col for col in cfg["category"] if col != self.target]
         }
 
+        self.X_tr, self.X_te, self.y_tr, self.y_te = None, None, None, None
         self.train_loader, self.test_loader = None, None
 
     def __repr__(self) -> str:
         if self.classification: 
-            return f"Data(target={self.target}, classification={self.classification}, reference={self.reference}, test_prop={self.test_prop}, batch_size={self.batch_size})"
+            return f"Data(target={self.target}, classification={self.classification}, reference={self.target_class}, test_prop={self.test_prop}, batch_size={self.batch_size})"
         else:
             return f"Data(target={self.target}, classification={self.classification}, test_prop={self.test_prop}, batch_size={self.batch_size})"
 
     def _make_preprocessor(self): 
 
-        self._columns_to_scale = [
-            key for key, type in self._feature_types.items() if type=="numeric"
-        ]
+        self._columns_to_scale = self.feature_types["numeric"]
         numeric_transformer = Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="median")),
@@ -57,9 +56,7 @@ class Data:
             ]
         )
 
-        self._columns_to_encode = [
-            key for key, type in self._feature_types.items() if type=="category"
-        ]
+        self._columns_to_encode = self.feature_types["category"]
         categorical_transformer = Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
@@ -75,11 +72,16 @@ class Data:
         )
 
     def preprocess(self, df): 
+        """Preprocess original data and split into train and test sets."""
+
+        n_unique_values = df[self.target].nunique()
+        if n_unique_values > 2:
+            raise NotImplementedError("Multiclass classification is not yet implemented.")
 
         self.X = df.drop(columns=[self.target])
 
         if self.classification: 
-            self.y = df[self.target].apply(lambda x: 1 if x==self.reference else 0)
+            self.y = df[self.target].apply(lambda x: 1 if x==self.target_class else 0)
 
         X_tr, X_te, y_tr, y_te = train_test_split(self.X, self.y, test_size=self.test_prop, random_state=42)
 
@@ -91,15 +93,64 @@ class Data:
             .named_steps["onehot"]\
             .get_feature_names_out(input_features=self._columns_to_encode)
         
-        self.feature_names = self._columns_to_scale + list(self._cat_feature_names)
+        self._new_feature_names = self._columns_to_scale + list(self._cat_feature_names)
 
-        self._X_tr = self._preprocessor.transform(X_tr)
-        self._X_te = self._preprocessor.transform(X_te)
+        self.X_tr = self._preprocessor.transform(X_tr)
+        self.X_te = self._preprocessor.transform(X_te)
 
-        self._y_tr = y_tr.to_numpy()
-        self._y_te = y_te.to_numpy()  
+        self.y_tr = y_tr.to_numpy()
+        self.y_te = y_te.to_numpy()  
 
-        datasets = dta.create_datasets(self._X_tr, self._y_tr, self._X_te, self._y_te)
-        data = dta.DataBunch(*dta.create_loaders(datasets, bs=32, device="cpu"))
+    def make_loaders(self): 
+        """Create data loaders for train and test sets. 
+        
+        Details: only select positive class samples for train and test sets."""
+
+        if self.X_tr is None or self.X_te is None or self.y_tr is None or self.y_te is None: 
+            raise ValueError("Data must be preprocessed before creating data loaders.")
+
+        idxs_tr, idxs_te = np.where(self.y_tr == 1)[0], np.where(self.y_te == 1)[0]
+        X_tr, X_te, y_tr, y_te = self.X_tr[idxs_tr], self.X_te[idxs_te], self.y_tr[idxs_tr], self.y_te[idxs_te]
+
+        datasets = dta.create_datasets(X_tr, y_tr, X_te, y_te)
+        data = dta.DataBunch(*dta.create_loaders(datasets, bs=self.batch_size, device="cpu"))
 
         self.train_loader, self.test_loader = data.train_dl, data.test_dl
+
+    def _inverse_scaling(self, x: np.ndarray) -> np.ndarray: 
+        x_new = self._preprocessor\
+            .named_transformers_["num"]\
+            .named_steps["scaler"]\
+            .inverse_transform(x)
+
+        return x_new
+    
+    def _inverse_one_hot(self, x: np.ndarray) -> np.ndarray: 
+        x_new = self._preprocessor\
+            .named_transformers_["cat"]\
+            .named_steps["onehot"]\
+            .inverse_transform(x)
+        
+        return x_new
+
+    def generate(self, new_samples: Union[torch.Tensor, np.ndarray]):
+        """Make feature matrix and dataframe from synthetic samples."""
+
+        if isinstance(new_samples, torch.Tensor):
+            new_samples = new_samples.detach().numpy()
+
+        numeric_cols_ixs = [ix for ix, col in enumerate(self._new_feature_names) if col in self.feature_types["numeric"]]
+        category_cols_ixs = [ix for ix, col in enumerate(self._new_feature_names) if col not in self.feature_types["numeric"]]
+
+        x_num = new_samples[:, numeric_cols_ixs]
+        x_cat = new_samples[:, category_cols_ixs]
+
+        self.X_syn = np.concatenate([x_num, x_cat], axis=1)
+
+        x_num = self._inverse_scaling(x_num)
+        x_cat = self._inverse_one_hot(x_cat)
+
+        self.synthetic_df = pd.DataFrame(
+            data=np.concatenate([x_num, x_cat], axis=1),
+            columns=self.feature_types["numeric"] + self.feature_types["category"]
+        ) 
