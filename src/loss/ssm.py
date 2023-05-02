@@ -17,6 +17,7 @@ def sliced_score_estimation(score_net, samples, n_particles=1) -> Tuple:
 
     dup_samples = samples.unsqueeze(0).expand(n_particles, *samples.shape).contiguous().view(-1, *samples.shape[1:])
     dup_samples.requires_grad_(True)
+    
     vectors = torch.randn_like(dup_samples)
     vectors = vectors / torch.norm(vectors, dim=-1, keepdim=True)
 
