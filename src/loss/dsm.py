@@ -45,7 +45,7 @@ def anneal_dsm_score_estimation(
     perturbed_samples = samples + torch.randn_like(samples) * used_sigmas
 
     target = - 1 / (used_sigmas ** 2) * (perturbed_samples - samples)
-    scores = scorenet(perturbed_samples, labels)
+    scores = scorenet(perturbed_samples)
 
     target = target.view(target.shape[0], -1)
     scores = scores.view(scores.shape[0], -1)
