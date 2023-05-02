@@ -26,30 +26,42 @@ data:
     "foreign_worker"
   ]
   target: default 
-  reference: Default
+  target_class: Default
   classification: true
   test_prop: .2
   batch_size: 32
   logit_transform: false
 model: 
   input_layer: 
-    [[Linear, 47, 512],     # number of input features
-    [Dropout, 0.1], 
-    [ReLU]]
+    [
+      [Linear, 48, 512],     # number of input features
+      [Dropout, 0.3], 
+      [Tanh]
+    ]
   hidden_layers: 
-    [[Linear, 512, 256], 
-    [Dropout, 0.1], 
-    [ReLU]]
+    [
+      [Linear, 512, 256], 
+      [Dropout, 0.2], 
+      [Tanh], 
+      [Linear, 256, 128], 
+      [Dropout, 0.1], 
+      [ReLU]
+    ]
   output_layer:
-    [[Linear, 256, 47]]      # number of input features
+    [[Linear, 128, 48]]      # number of input features
 training: 
-  n_epochs: 50000
-  n_iters: 10000000000000
-  noise_std: 0.01
-  n_particles: 1
-  algo: "dsm"
-  snapshot_freq: 30000
-  eval_freq: 500
+  algo: "dsm"                
+  anneal_power: 2.0          # dsm
+  sigma_begin: 1             
+  sigma_end: 0.01         
+  n_sigmas: 100   
+  n_particles: 1             # ssm
+  n_epochs: 5000
+  snapshot_freq: 2500
+  n_steps_min: 2500
+  eval_freq: 250
+  stop_threshold: .0001
+  n_steps_no_improvement: 2
   resume_training: false
 optim:
   optimizer: 
@@ -62,9 +74,11 @@ optim:
     gamma: .9
   use_scheduler: false
 sampling: 
-  langevin: 
-    n_steps: 1000
-    step_lr: 0.00002
-    n_batches: 1
+  n_steps_each: 100
+  step_lr: 0.00002
+  n_batches: 3
+backup: 
+  save: true
+  dir: backup/credit/annealscorenet/dsm
+  checkpoint: -1
 device: cpu
-backup_dir: models/credit/scorenetdsm

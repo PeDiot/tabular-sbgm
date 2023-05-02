@@ -1,0 +1,82 @@
+data: 
+  numeric: [
+    "duration_in_month",
+    "credit_amount",
+    "installment_as_income_perc",
+    "present_residence_since",
+    "age",
+    "credits_this_bank",
+    "people_under_maintenance"
+  ]
+  category: [
+    "default",
+    "account_check_status",
+    "credit_history",
+    "purpose",
+    "savings",
+    "present_employment_since",
+    "sex",
+    "personal_status",
+    "other_debtors",
+    "property",
+    "other_installment_plans",
+    "housing",
+    "job",
+    "telephone",
+    "foreign_worker"
+  ]
+  target: default 
+  target_class: Default
+  classification: true
+  test_prop: .2
+  batch_size: 32
+  logit_transform: false
+model: 
+  input_layer: 
+    [
+      [Linear, 48, 512],     # number of input features
+      [Dropout, 0.3], 
+      [Tanh]
+    ]
+  hidden_layers: 
+    [
+      [Linear, 512, 256], 
+      [Dropout, 0.2], 
+      [Tanh], 
+      [Linear, 256, 128], 
+      [Dropout, 0.1], 
+      [ReLU]
+    ]
+  output_layer:
+    [[Linear, 128, 48]]      # number of input features
+training: 
+  algo: "ssm"                
+  noise_std: 0.01            # dsm
+  n_particles: 1             # ssm
+  n_epochs: 5000
+  snapshot_freq: 2500
+  n_steps_min: 2500
+  eval_freq: 250
+  stop_threshold: .0001
+  n_steps_no_improvement: 2
+  resume_training: false
+optim:
+  optimizer: 
+    weight_decay: 0.000
+    name: "Adam"
+    lr: 0.001
+    beta1: 0.9
+  scheduler: 
+    name: ExponentialLR
+    gamma: .9
+  use_scheduler: false
+sampling: 
+  langevin: 
+    n_steps: 1000
+    step_lr: 0.00002
+    n_batches: 3
+backup: 
+  save: true
+  dir: backup/credit/scorenet/ssm
+  checkpoint: -1
+device: cpu
