@@ -40,24 +40,24 @@ model:
     ]
   hidden_layers: 
     [
-      [Linear, 512, 256], 
+      [Linear, 512, 512], 
       [Dropout, 0.2], 
       [Tanh], 
-      [Linear, 256, 128], 
+      [Linear, 512, 256], 
       [Dropout, 0.1], 
       [ReLU]
     ]
   output_layer:
-    [[Linear, 128, 48]]      # number of input features
+    [[Linear, 256, 48]]       # number of input features
 training: 
   algo: "ssm"                
-  noise_std: 0.01            # dsm
-  n_particles: 1             # ssm
+  noise_std: .1                # dsm
+  n_particles: 10              # ssm
   n_epochs: 5000
   snapshot_freq: 2500
   n_steps_min: 2500
-  eval_freq: 250
-  stop_threshold: .0001
+  eval_freq: 500
+  stop_threshold: .001
   n_steps_no_improvement: 2
   resume_training: false
 optim:
@@ -71,12 +71,13 @@ optim:
     gamma: .9
   use_scheduler: false
 sampling: 
-  langevin: 
-    n_steps: 1000
-    step_lr: 0.00002
-    n_batches: 3
+  n_steps: 1000
+  step_lr: 0.00002
+  n_batches: 3
+  burn_in: .7                  # proportion of mcmc samples to burn 
 backup: 
-  save: true
-  dir: backup/credit/scorenet/ssm
+  save: false
+  dir: backup/credit/scorenet/dsm
   checkpoint: -1
 device: cpu
+mode: eval

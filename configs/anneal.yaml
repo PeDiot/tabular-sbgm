@@ -40,22 +40,22 @@ model:
     ]
   hidden_layers: 
     [
-      [Linear, 512, 256], 
+      [Linear, 512, 512], 
       [Dropout, 0.2], 
       [Tanh], 
-      [Linear, 256, 128], 
+      [Linear, 512, 256], 
       [Dropout, 0.1], 
       [ReLU]
     ]
   output_layer:
-    [[Linear, 128, 48]]      # number of input features
+    [[Linear, 256, 48]]       # number of input features
 training: 
   algo: "dsm"                
-  anneal_power: 2.0          # dsm
+  anneal_power: 2.0           # dsm
   sigma_begin: 1             
   sigma_end: 0.01         
-  n_sigmas: 100   
-  n_particles: 1             # ssm
+  n_sigmas: 500   
+  n_particles: 1              # ssm
   n_epochs: 5000
   snapshot_freq: 2500
   n_steps_min: 2500
@@ -77,8 +77,10 @@ sampling:
   n_steps_each: 100
   step_lr: 0.00002
   n_batches: 3
+  burn_in: .7                  # proportion of mcmc samples to burn 
 backup: 
   save: true
   dir: backup/credit/annealscorenet/dsm
   checkpoint: -1
 device: cpu
+mode: train
