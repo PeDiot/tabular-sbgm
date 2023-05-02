@@ -40,7 +40,7 @@ class AnnealRunner(Runner):
         ).float().to(self.config["device"])
 
     def __repr__(self) -> str:
-        return f"ScoreNetRunner(config={self.config})"
+        return f"AnnealRunner(config={self.config})"
 
     def train(self) -> Dict:
         """Train and evaluate score-based model. 
@@ -170,7 +170,10 @@ class AnnealRunner(Runner):
 
         for _ in range(n_batches):
             all_samples = anneal_langevin_dynamics(init_samples, self.model, self.sigmas, n_steps_each, step_lr) 
-            new_samples = all_samples[-1]
+            n_samples = len(all_samples)
+
+            new_samples = torch.stack(all_samples[int(n_samples * self._cfg_sampling["burn_in"]):], dim=0)
+            new_samples = torch.mean(new_samples, dim=0)
 
             if self._cfg_data["logit_transform"]:
                 new_samples = torch.sigmoid(new_samples)

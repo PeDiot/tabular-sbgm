@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from src.data import Data
 from src.runner.base import Runner
 from src.loss.dsm import dsm_score_estimation
-from src.loss.ssm import sliced_score_estimation_vr
+from src.loss.ssm import sliced_score_estimation
 from src.utils import check_input_dim, save_pickle
 from src.sampling import langevin_dynamics
 
@@ -58,7 +58,7 @@ class ScoreNetRunner(Runner):
 
                 if self._cfg_training["algo"] == "ssm":
                     X = X + torch.randn_like(X) * self._cfg_training["noise_std"]
-                    loss, *_ = sliced_score_estimation_vr(score_net, X.detach(), n_particles=1)
+                    loss, *_ = sliced_score_estimation(score_net, X.detach(), n_particles=self._cfg_training["n_particles"])
 
                 elif self._cfg_training["algo"] == "dsm":
                     loss = dsm_score_estimation(score_net, X, sigma=self._cfg_training["noise_std"])
@@ -86,7 +86,7 @@ class ScoreNetRunner(Runner):
 
                     if self._cfg_training["algo"] == "ssm":
                         test_X += torch.randn_like(test_X) * self._cfg_training["noise_std"]
-                        test_loss, *_ = sliced_score_estimation_vr(score_net, test_X.detach(), n_particles=self._cfg_training["n_particles"])
+                        test_loss, *_ = sliced_score_estimation(score_net, test_X.detach(), n_particles=self._cfg_training["n_particles"])
 
                     elif self._cfg_training["algo"] == "dsm":
                         test_loss = dsm_score_estimation(score_net, test_X, sigma=self._cfg_training["noise_std"])
@@ -140,10 +140,10 @@ class ScoreNetRunner(Runner):
         self.model.eval()
 
         if n_batches is None:
-            n_batches = self._cfg_sampling["langevin"]["n_batches"]
+            n_batches = self._cfg_sampling["n_batches"]
 
-        n_steps = self._cfg_sampling["langevin"]["n_steps"]
-        step_lr = self._cfg_sampling["langevin"]["step_lr"]
+        n_steps = self._cfg_sampling["n_steps"]
+        step_lr = self._cfg_sampling["step_lr"]
 
         reference_samples, _ = iter(self.test_loader).next()
         init_samples = torch.rand_like(reference_samples)
@@ -153,7 +153,10 @@ class ScoreNetRunner(Runner):
 
         for _ in loop:
             all_samples = langevin_dynamics(init_samples, self.model, n_steps, step_lr) 
-            new_samples = all_samples[-1]
+            n_samples = len(all_samples)
+
+            new_samples = torch.stack(all_samples[int(n_samples * self._cfg_sampling["burn_in"]):], dim=0)
+            new_samples = torch.mean(new_samples, dim=0)
 
             if self._cfg_data["logit_transform"]:
                 new_samples = torch.sigmoid(new_samples)
