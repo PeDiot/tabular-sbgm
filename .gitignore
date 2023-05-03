@@ -1,4 +1,5 @@
 backup/
 __pycache__
-datasets/
+datasets/german_credit.csv
+datasets/taiwan_payment.csv
 env/

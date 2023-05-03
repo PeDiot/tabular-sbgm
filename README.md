@@ -6,6 +6,9 @@
 
 - [deep_tabular_augmentation](https://github.com/lschmiddey/deep_tabular_augmentation)
 - [ncsn](https://github.com/ermongroup/ncsn)
+
+### Datasets
+- [Default Payments of Credit Card Clients](https://www.kaggle.com/datasets/uciml/default-of-credit-card-clients-dataset)]
 - [credit-dataset](https://github.com/Giskard-AI/giskard-client/blob/main/sample_data/classification/credit/german_credit_prepared.csv)
 
 ### Articles
