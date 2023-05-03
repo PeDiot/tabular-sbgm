@@ -12,6 +12,9 @@ import pickle as pkl
 from rich.table import Table
 import rich
 
+from sdv.metadata import SingleTableMetadata
+from src.data import Data
+
 
 def save_pickle(obj, path: str):
     with open(path, "wb") as f:
@@ -102,3 +105,30 @@ def display_clf_metrics(clf_report: Dict, clf_aug_report: Dict, digits: int=3):
                     table.add_row(metric, str(round(value, digits)), str(round(value, digits))) 
                     
         rich.print(table) 
+
+def make_sdv_metadata(data: Data, add_target: bool=False) -> SingleTableMetadata:
+    """Make metadata from data for SDV.
+    
+    Args:
+        data (Data): Data object.
+        add_target (bool, optional): Whether to add target variable to metadata. Defaults to False.
+        
+    Returns:
+        metadata (SingleTableMetadata): Metadata dictionary."""
+
+    metadata = SingleTableMetadata()
+
+    for var in data.feature_types["category"]: 
+        metadata.add_column(column_name=var, sdtype="categorical")
+
+    for var in data.feature_types["numeric"]: 
+        metadata.add_column(column_name=var, sdtype="numerical", computer_representation="Float")
+
+    if add_target:
+        if data.classification: 
+            metadata.add_column(column_name=data.target, sdtype="categorical")
+        else: 
+            metadata.add_column(column_name=data.target, sdtype="numerical", computer_representation="Float")
+
+    return metadata 
+
