@@ -37,14 +37,20 @@ class Data:
             "category": [col for col in cfg["category"] if col != self.target]
         }
 
+        self.input_dim = None
+        self.n_batches = None 
+
         self.X_tr, self.X_te, self.y_tr, self.y_te = None, None, None, None
         self.train_loader, self.test_loader = None, None
+        
+        self.synthetic_df = None
+        self.X_syn = None
 
     def __repr__(self) -> str:
         if self.classification: 
-            return f"Data(target={self.target}, classification={self.classification}, reference={self.target_class}, test_prop={self.test_prop}, batch_size={self.batch_size})"
+            return f"Data(target={self.target}, classification={self.classification}, reference={self.target_class}, test_prop={self.test_prop}, batch_size={self.batch_size}, n_batches={self.n_batches})"
         else:
-            return f"Data(target={self.target}, classification={self.classification}, test_prop={self.test_prop}, batch_size={self.batch_size})"
+            return f"Data(target={self.target}, classification={self.classification}, test_prop={self.test_prop}, batch_size={self.batch_size}, n_batches={self.n_batches})"
 
     def _make_preprocessor(self): 
 
@@ -59,7 +65,7 @@ class Data:
         self._columns_to_encode = self.feature_types["category"]
         categorical_transformer = Pipeline(
             [
-                ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
+                ("imputer", SimpleImputer(strategy="most_frequent")),
                 ("onehot", OneHotEncoder(handle_unknown="ignore", drop="first")) 
             ]
         )
@@ -100,6 +106,9 @@ class Data:
 
         self.y_tr = y_tr.to_numpy()
         self.y_te = y_te.to_numpy()  
+
+        self.input_dim = self.X_tr.shape[1]
+        self.n_batches = int(np.ceil(self.X_tr.shape[0] / self.batch_size))
 
     def make_loaders(self): 
         """Create data loaders for train and test sets. 
