@@ -1,40 +1,42 @@
 data: 
   numeric: [
-    "duration_in_month",
-    "credit_amount",
-    "installment_as_income_perc",
-    "present_residence_since",
+    "limit_bal", 
     "age",
-    "credits_this_bank",
-    "people_under_maintenance"
+    "pay_0", 
+    "pay_2", 
+    "pay_3", 
+    "pay_4", 
+    "pay_5", 
+    "pay_6", 
+    "bill_amt1", 
+    "bill_amt2", 
+    "bill_amt3", 
+    "bill_amt4", 
+    "bill_amt5", 
+    "bill_amt6", 
+    "pay_amt1",
+    "pay_amt2", 
+    "pay_amt3", 
+    "pay_amt4", 
+    "pay_amt5", 
+    "pay_amt6"
   ]
   category: [
-    "default",
-    "account_check_status",
-    "credit_history",
-    "purpose",
-    "savings",
-    "present_employment_since",
-    "sex",
-    "personal_status",
-    "other_debtors",
-    "property",
-    "other_installment_plans",
-    "housing",
-    "job",
-    "telephone",
-    "foreign_worker"
+    "default_payment_next_month",
+    "sex", 
+    "education", 
+    "marriage"
   ]
-  target: default 
-  target_class: Default
+  target: default_payment_next_month 
+  target_class: 1
   classification: true
   test_prop: .2
-  batch_size: 32
+  batch_size: 64
   logit_transform: false
 model: 
   input_layer: 
     [
-      [Linear, 48, 512],     # number of input features
+      [Linear, 30, 512],     # number of input features
       [Dropout, 0.3], 
       [Tanh]
     ]
@@ -48,7 +50,7 @@ model:
       [ReLU]
     ]
   output_layer:
-    [[Linear, 256, 48]]       # number of input features
+    [[Linear, 256, 30]]       # number of input features
 training: 
   algo: "dsm"                
   anneal_power: 2.0           # dsm
@@ -80,7 +82,7 @@ sampling:
   burn_in: .7                  # proportion of mcmc samples to burn 
 backup: 
   save: true
-  dir: backup/credit/annealscorenet/dsm
+  dir: backup/taiwan_payment/annealscorenet/dsm
   checkpoint: -1
 device: cpu
 mode: train
