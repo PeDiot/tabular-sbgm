@@ -23,9 +23,7 @@ class ScoreNetRunner(Runner):
         if data.train_loader is None or data.test_loader is None:
             raise ValueError("Data loaders are not defined.")
 
-        input_dim = iter(data.train_loader).next()[0].shape[-1]
-
-        self._cfg_model = check_input_dim(self._cfg_model, input_dim) 
+        self._cfg_model = check_input_dim(self._cfg_model, data.input_dim) 
                 
         self.train_loader, self.test_loader = data.train_loader, data.test_loader
 
