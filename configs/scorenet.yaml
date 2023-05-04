@@ -58,7 +58,7 @@ model:
       [LayerNorm, 30]      
     ]       
 training: 
-  algo: "ssm"                
+  algo: "dsm"                
   noise_std: .1                # dsm
   n_particles: 1               # ssm
   n_epochs: 1000
@@ -85,7 +85,7 @@ sampling:
   strategy: mean               # average or all or median
 backup: 
   save: true
-  dir: backup/taiwan_payment/scorenet/ssm
+  dir: backup/taiwan_payment/scorenet/dsm2
   checkpoint: -1
 device: cpu
 mode: eval
