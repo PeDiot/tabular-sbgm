@@ -90,4 +90,4 @@ backup:
   dir: backup/taiwan_payment/annealscorenet/dsm2
   checkpoint: -1
 device: cpu
-mode: train
+mode: eval

@@ -85,7 +85,7 @@ sampling:
   strategy: mean               # average or all or median
 backup: 
   save: true
-  dir: backup/taiwan_payment/scorenet/dsm2
+  dir: backup/taiwan_payment/scorenet/ssm
   checkpoint: -1
 device: cpu
 mode: eval
