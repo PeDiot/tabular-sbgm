@@ -75,7 +75,7 @@ def get_clf_metrics(
     
     return metrics
 
-def display_clf_metrics(clf_report: Dict, clf_aug_report: Dict, digits: int=3): 
+def display_clf_metrics(clf_report: Dict, clf_aug_report: Dict, digits: int=3, title: str="Classification Report"): 
     """Display classification metrics for original and augmented classifiers.
     
     Args:
@@ -84,8 +84,7 @@ def display_clf_metrics(clf_report: Dict, clf_aug_report: Dict, digits: int=3):
         digits (int, optional): Number of digits to display. Defaults to 3."""
 
     for ds_type in ("train", "test"): 
-
-        table = Table(title=f"Classification Report ({ds_type})")
+        table = Table(title=f"{title} ({ds_type})")
 
         table.add_column("Metric")
         table.add_column("Original Data")

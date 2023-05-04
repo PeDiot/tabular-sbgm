@@ -40,7 +40,7 @@ class ScoreNetRunner(Runner):
         test_iter = iter(self.test_loader)
 
         loss_tracker = {"train": [], "test": []}
-        loop = trange(self._cfg_training["n_epochs"])
+        loop = trange(self._cfg_training["n_epochs"], desc=f"Training ScoreNetRunner...")
 
         for epoch in loop:
             running_train_loss, running_test_loss = [], []
@@ -97,9 +97,9 @@ class ScoreNetRunner(Runner):
                     loss_tracker["train"].append(avg_train_loss) 
                     loss_tracker["test"].append(avg_test_loss)
 
-                    test_loss_diff = np.abs(avg_test_loss - prev_avg_test_loss)
+                    test_loss_diff = avg_test_loss - prev_avg_test_loss
 
-                    if step > self._cfg_training["n_steps_min"] and test_loss_diff < self._cfg_training["stop_threshold"]:
+                    if step > self._cfg_training["n_steps_min"] and test_loss_diff > 0:
                         n_steps_no_improvement += 1
                 
                         if n_steps_no_improvement >= self._cfg_training["n_steps_no_improvement"]:
@@ -108,7 +108,10 @@ class ScoreNetRunner(Runner):
                                 self.save_states(step) 
                                 save_pickle(loss_tracker, f"{self._cfg_backup['dir']}/loss.pkl")
 
-                            return loss_tracker                 
+                            return loss_tracker  
+
+                    else:
+                        n_steps_no_improvement = 0               
 
                     msg = f"Epoch: {epoch+1} | Train loss: {avg_train_loss:.5f} | Val loss: {avg_test_loss:.5f}"
                     loop.set_description(msg)
@@ -154,7 +157,15 @@ class ScoreNetRunner(Runner):
             n_samples = len(all_samples)
 
             new_samples = torch.stack(all_samples[int(n_samples * self._cfg_sampling["burn_in"]):], dim=0)
-            new_samples = torch.mean(new_samples, dim=0)
+           
+            if self._cfg_sampling["strategy"] == "mean":
+                new_samples = torch.mean(new_samples, dim=0)
+            elif self._cfg_sampling["strategy"] == "median":
+                new_samples = torch.median(new_samples, dim=0)[0]
+            elif self._cfg_sampling["strategy"] == "all":
+                new_samples = new_samples 
+            else:
+                raise ValueError(f"Invalid sampling strategy: {self._cfg_sampling['strategy']}.")
 
             if self._cfg_data["logit_transform"]:
                 new_samples = torch.sigmoid(new_samples)

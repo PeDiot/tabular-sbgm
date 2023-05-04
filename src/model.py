@@ -19,10 +19,14 @@ def nn_constructor(architecture: Dict) -> List:
                 layers.append(nn.PReLU())
             elif layer_name == "ReLU":
                 layers.append(nn.ReLU())
+            elif layer_name == "ELU":
+                layers.append(nn.ELU())
             elif layer_name == "Sigmoid":
                 layers.append(nn.Sigmoid())
             elif layer_name == "Tanh":
                 layers.append(nn.Tanh())
+            elif layer_name == "LayerNorm":
+                layers.append(nn.LayerNorm(layer[1]))
             else:
                 raise ValueError(f"{layer_name} not written correctly or not implemented in utils.functions.nn_config_constructor")
     

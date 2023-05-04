@@ -28,7 +28,8 @@ def langevin_dynamics(
 
     with torch.no_grad():
         for _ in range(n_steps):
-            new_x.append(torch.clamp(x, 0.0, 1.0).to("cpu"))
+            # x = torch.clamp(x, 0.0, 1.0).to("cpu")
+            new_x.append(x)
             noise = torch.randn_like(x) * np.sqrt(step_lr * 2)
             grad = scorenet(x)
             x = x + step_lr * grad + noise
@@ -68,7 +69,8 @@ def anneal_langevin_dynamics(
             step_size = step_lr * (sigma / sigmas[-1]) ** 2
             
             for _ in range(n_steps_each):
-                new_x.append(torch.clamp(x, 0.0, 1.0).to("cpu"))
+                # x = torch.clamp(x, 0.0, 1.0).to("cpu")
+                new_x.append(x)
                 noise = torch.randn_like(x) * np.sqrt(step_size * 2)
                 grad = scorenet(x)                                      # scorenet(x, labels)
                 x = x + step_size * grad + noise
