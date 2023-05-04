@@ -33,37 +33,41 @@ data:
   test_prop: .2
   batch_size: 64
   logit_transform: false
-model: 
+model:                        # https://github.com/ermongroup/ncsn/blob/master/models/scorenet.py
   input_layer: 
     [
-      [Linear, 30, 512],     # number of input features
-      [Dropout, 0.3], 
-      [Tanh]
+      [Linear, 30, 1024],     # number of input features
+      # [Dropout, 0.3], 
+      [ELU]
     ]
   hidden_layers: 
     [
-      [Linear, 512, 512], 
-      [Dropout, 0.2], 
-      [Tanh], 
-      [Linear, 512, 256], 
-      [Dropout, 0.1], 
-      [ReLU]
+      [Linear, 1024, 1024], 
+      # [Dropout, 0.2], 
+      [ELU], 
+      [LayerNorm, 1024],
+      [Linear, 1024, 512], 
+      [LayerNorm, 512],
+      # [Dropout, 0.1], 
+      [ELU]
     ]
   output_layer:
-    [[Linear, 256, 30]]       # number of input features
-training: 
+    [
+      [Linear, 512, 30],       # number of input features
+      [LayerNorm, 30]      
+    ]  
+training:     
   algo: "dsm"                
   anneal_power: 2.0           # dsm
   sigma_begin: 1             
   sigma_end: 0.01         
-  n_sigmas: 500   
+  n_sigmas: 100   
   n_particles: 1              # ssm
-  n_epochs: 5000
-  snapshot_freq: 2500
-  n_steps_min: 2500
-  eval_freq: 250
-  stop_threshold: .0001
-  n_steps_no_improvement: 2
+  n_epochs: 200
+  snapshot_freq: 1000
+  n_steps_min: 1000
+  eval_freq: 1000
+  n_steps_no_improvement: 3
   resume_training: false
 optim:
   optimizer: 
@@ -79,10 +83,11 @@ sampling:
   n_steps_each: 100
   step_lr: 0.00002
   n_batches: 3
-  burn_in: .7                  # proportion of mcmc samples to burn 
+  burn_in: .7                   # proportion of mcmc samples to burn 
+  strategy: mean                # average or all or median
 backup: 
   save: true
-  dir: backup/taiwan_payment/annealscorenet/dsm
+  dir: backup/taiwan_payment/annealscorenet/dsm2
   checkpoint: -1
 device: cpu
 mode: train
