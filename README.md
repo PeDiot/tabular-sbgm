@@ -17,6 +17,8 @@ It consists in two steps:
 
 ## Code 
 
+### Architecture
+
 The project architecture is as follows and the configuration files used in runners are in the [`configs/`](configs/) folder.
 
 ```
@@ -28,6 +30,31 @@ src/
 ├── sampling.py
 └── utils.py
 ```
+
+### Getting started
+
+1. Clone the repository 
+
+```
+git clone 
+cd tabular-sbgm
+```
+
+2. Setup environment
+
+``` 
+python -m venv\env
+env\Scripts\activate
+pip install -r requirements.txt
+```
+
+3. Download datasets [here](https://drive.google.com/drive/folders/1ScS8QD8X5e0yQ6EMCnmdguaDvI_dqO4R?usp=sharing)
+
+4. Download model checkpoints [here](https://drive.google.com/drive/folders/1xnqoYJ8Vh3XTMcSmcPwS9jDdtQqOaorD?usp=sharing)
+
+5. Open [`scorenet`](configs/scorenet.yaml) or [`anneal`](configs/anneal.yaml) and set the `mode` parameter to `eval`
+
+6. Go to [`notebook`](notebook.ipynb) and follow the instructions.
 
 ## Theory
 
@@ -103,8 +130,8 @@ Column Pair Trends: 65.07%
 ```
 
 <p float="left">
-  <img src="figs/limit_bal_scorenet_dsm.png" width="300" height="150" />
-  <img src="figs/education_scorenet_dsm.png" width="300" height="150" /> 
+  <img src="figs/limit_bal_scorenet_dsm.png" width="400" height="200" />
+  <img src="figs/education_scorenet_dsm.png" width="400" height="200" /> 
 </p>
 
 The following table shows classification results obtained when training `LogisticRegression` classifier on the original training set vs. augmented training set (sampled from `ScoreNet` model with `dsm` loss function and Langevin sampling). 
